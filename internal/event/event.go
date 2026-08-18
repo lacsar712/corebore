@@ -46,7 +46,7 @@ func Parse(body []byte) (CoreEvent, error) {
 	}
 	var env CoreEvent
 	if err := json.Unmarshal(body, &env); err != nil {
-		return CoreEvent{}, fmt.Errorf("json: %w", err)
+		return CoreEvent{}, fmt.Errorf("json: %v", err)
 	}
 	if err := ValidateType(env.Type); err != nil {
 		return CoreEvent{}, err
