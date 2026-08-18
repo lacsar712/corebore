@@ -97,7 +97,7 @@ func (e *Engine) handle(ctx context.Context, j job.Job) {
 	}
 
 	j.Attempt++
-	res := e.client.Post(ctx, lab.Request{
+	res := e.client.Post(context.Background(), lab.Request{
 		URL:           dest.URL,
 		Secret:        dest.Secret,
 		EventID:       j.EventID,
