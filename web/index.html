@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CoreBore</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>CoreBore</h1>
+    <p class="sub">geological core custody · interval / gamma · lab intake relay</p>
+    <div id="status" class="status">connecting…</div>
+  </header>
+  <main>
+    <section>
+      <h2>Lab intakes</h2>
+      <form id="dest-form">
+        <input name="name" placeholder="lab name" required />
+        <input name="url" placeholder="https://lab.example/intake" required />
+        <input name="secret" placeholder="lab outbound secret" required minlength="8" />
+        <input name="type_prefixes" placeholder="prefixes, e.g. core.interval." />
+        <button type="submit">Add</button>
+      </form>
+      <div id="destinations"></div>
+    </section>
+    <section>
+      <h2>Post core event</h2>
+      <p class="hint">Uses ingest secret <code>dev-ingest-secret</code> and HMAC-SHA256 headers.</p>
+      <form id="event-form">
+        <input name="type" value="core.interval.boxed" required />
+        <textarea name="payload" rows="8">{
+  "hole_id": "BH-14",
+  "from_depth_m": 102.0,
+  "to_depth_m": 103.5,
+  "box_label": "BX-14-A",
+  "lithology": "sandstone"
+}</textarea>
+        <button type="submit">Send</button>
+      </form>
+      <pre id="event-result"></pre>
+    </section>
+    <section>
+      <h2>Journal</h2>
+      <button type="button" id="refresh">Refresh</button>
+      <div id="journal"></div>
+    </section>
+    <section>
+      <h2>Dead letter</h2>
+      <div id="dlq"></div>
+    </section>
+    <section>
+      <h2>Loopback lab received</h2>
+      <div id="loop"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
