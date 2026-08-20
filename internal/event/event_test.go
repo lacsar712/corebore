@@ -60,4 +60,23 @@ func TestParseWrapsSyntaxError(t *testing.T) {
 	if !errors.As(err, &syn) {
 		t.Fatalf("want json.SyntaxError via errors.As, got %v", err)
 	}
+	if !errors.Is(err, event.ErrSyntax) {
+		t.Fatalf("want event.ErrSyntax, got %v", err)
+	}
+}
+
+func TestParseTypeMismatchNotSyntax(t *testing.T) {
+	// {"type":123} is valid JSON syntax but the type field has the wrong kind,
+	// so it is a semantic (422) error rather than a syntax (400) error.
+	_, err := event.Parse([]byte(`{"type":123,"payload":{}}`))
+	if err == nil {
+		t.Fatal("expected type mismatch error")
+	}
+	if errors.Is(err, event.ErrSyntax) {
+		t.Fatalf("type mismatch must not be ErrSyntax, got %v", err)
+	}
+	var syn *json.SyntaxError
+	if errors.As(err, &syn) {
+		t.Fatalf("type mismatch must not be json.SyntaxError, got %v", err)
+	}
 }

@@ -62,6 +62,9 @@ func (p *Pipeline) Handle(h http.Header, body []byte) (Result, int, error) {
 	}
 	env, err := event.Parse(body)
 	if err != nil {
+		if errors.Is(err, event.ErrSyntax) {
+			return Result{}, http.StatusBadRequest, err
+		}
 		return Result{}, http.StatusUnprocessableEntity, err
 	}
 	if err := p.Nonces.CheckAndRemember(in.Nonce); err != nil {

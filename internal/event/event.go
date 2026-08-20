@@ -2,12 +2,17 @@ package event
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"unicode"
 )
 
 const MaxBody = 256 * 1024
+
+// ErrSyntax marks a malformed JSON body or payload so callers can map it to a
+// 400 Bad Request rather than a 422 semantic validation failure.
+var ErrSyntax = errors.New("json syntax error")
 
 // CoreEvent is a signed field custody message posted by a drill crew.
 type CoreEvent struct {
@@ -46,7 +51,11 @@ func Parse(body []byte) (CoreEvent, error) {
 	}
 	var env CoreEvent
 	if err := json.Unmarshal(body, &env); err != nil {
-		return CoreEvent{}, fmt.Errorf("json: %v", err)
+		var syn *json.SyntaxError
+		if errors.As(err, &syn) {
+			return CoreEvent{}, fmt.Errorf("%w: %w", ErrSyntax, err)
+		}
+		return CoreEvent{}, fmt.Errorf("json: %w", err)
 	}
 	if err := ValidateType(env.Type); err != nil {
 		return CoreEvent{}, err
@@ -55,7 +64,7 @@ func Parse(body []byte) (CoreEvent, error) {
 		return CoreEvent{}, fmt.Errorf("payload is required")
 	}
 	if !json.Valid(env.Payload) {
-		return CoreEvent{}, fmt.Errorf("payload is not valid json")
+		return CoreEvent{}, fmt.Errorf("payload is not valid json: %w", ErrSyntax)
 	}
 	switch {
 	case strings.HasPrefix(env.Type, "core.interval"):
