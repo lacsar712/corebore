@@ -96,6 +96,24 @@ func (b *Breaker) Allow() Decision {
 }
 
 func (b *Breaker) Success() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	switch b.state {
+	case HalfOpen:
+		// a probe succeeded: close the breaker and clear the failure history,
+		// otherwise interleaved fail/success/fail sequences would trip it again.
+		b.state = Closed
+		b.failures = 0
+		b.probesLeft = 0
+	case Closed:
+		// a success in the closed state resets the failure count, so a single
+		// failure after success does not push an otherwise-healthy destination
+		// toward the threshold.
+		b.failures = 0
+	case Open:
+		// successes cannot occur while open (Allow gates them off); ignore any
+		// stray report rather than closing prematurely.
+	}
 }
 
 func (b *Breaker) Failure() {
