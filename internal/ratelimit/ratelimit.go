@@ -35,8 +35,28 @@ func New(clk clock.Clock, ratePerSec float64, burst int) *Bucket {
 	}
 }
 
+// Take consumes one token if one is available now and returns 0 (proceed).
+// If no token is available it leaves the bucket untouched and returns how
+// long the caller should wait before the next token refills. The caller is
+// expected to retry after that delay rather than sleep in place, so Take does
+// not reserve future tokens — a token is only debited when it returns 0.
 func (b *Bucket) Take() (wait time.Duration) {
-	return 0
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	now := b.clk.Now()
+	if elapsed := now.Sub(b.lastTime); elapsed > 0 {
+		b.tokens += b.rate * elapsed.Seconds()
+		if b.tokens > b.burst {
+			b.tokens = b.burst
+		}
+		b.lastTime = now
+	}
+	if b.tokens >= 1 {
+		b.tokens--
+		return 0
+	}
+	deficit := 1 - b.tokens
+	return time.Duration((deficit / b.rate) * float64(time.Second))
 }
 
 type Snapshot struct {
